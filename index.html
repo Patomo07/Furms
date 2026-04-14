@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ESSENCE — Perfumería de Autor</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+
+  <!-- PapaParse CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet"/>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream:        '#0D0D0D',
+            ivory:        '#141414',
+            gold:         '#A8A8A8',
+            'gold-light': '#D8D8D8',
+            charcoal:     '#E8E8E8',
+            muted:        '#888888',
+          },
+          fontFamily: {
+            display: ['"Cormorant Garamond"', 'serif'],
+            body:    ['"Jost"', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ── Base ── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Jost', sans-serif;
+      background-color: #0D0D0D;
+      color: #E8E8E8;
+      overflow-x: hidden;
+    }
+
+    /* ── Grain overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.45;
+    }
+
+    /* ── Typography ── */
+    .font-display { font-family: 'Cormorant Garamond', serif; }
+
+    /* ── Silver gradient text ── */
+    .gold-text {
+      background: linear-gradient(135deg, #C8C8C8 0%, #F0F0F0 50%, #A0A0A0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Silver rule ── */
+    .gold-rule {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #A8A8A8, transparent);
+    }
+
+    /* ── Nav ── */
+    #navbar {
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+    #navbar.scrolled {
+      background: rgba(13,13,13,0.96) !important;
+      box-shadow: 0 1px 24px rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Mobile menu */
+    #mobile-menu {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+    #mobile-menu.open {
+      max-height: 320px;
+    }
+
+    /* ── Hero ── */
+    .hero-bg {
+      background: linear-gradient(160deg, #000000 0%, #0D0D0D 55%, #111111 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 70% at 70% 40%, rgba(180,180,180,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-circle {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(180,180,180,0.15);
+      animation: pulse-ring 6s ease-in-out infinite;
+    }
+    @keyframes pulse-ring {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50%       { transform: scale(1.06); opacity: 0.6; }
+    }
+
+    /* ── Reveal animation ── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── Filter buttons ── */
+    .filter-btn {
+      font-family: 'Jost', sans-serif;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid #A8A8A8;
+      color: #A8A8A8;
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: #A8A8A8;
+      color: #0D0D0D;
+    }
+
+    /* ── Cards ── */
+    .perfume-card {
+      background: #1A1A1A;
+      border: 1px solid rgba(168,168,168,0.15);
+      transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+    .perfume-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .perfume-card.hidden { display: none; }
+
+    /* Card image */
+    .card-img-wrap {
+      overflow: hidden;
+      position: relative;
+    }
+    .card-img-wrap img {
+      width: 100%;
+      height: 260px;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+    }
+    .perfume-card:hover .card-img-wrap img {
+      transform: scale(1.04);
+    }
+
+    /* ── Steps ── */
+    .step-line {
+      position: absolute;
+      top: 28px;
+      left: calc(50% + 28px);
+      width: calc(100% - 56px);
+      height: 1px;
+      background: linear-gradient(90deg, #A8A8A8, rgba(168,168,168,0.2));
+    }
+
+    /* ── WhatsApp button (in cards) ── */
+    .wa-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 10px 0;
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-family: 'Jost', sans-serif;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.2s, box-shadow 0.2s;
+    }
+    .wa-btn i {
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .wa-btn:hover {
+      opacity: 0.88;
+      box-shadow: 0 4px 16px rgba(37,211,102,0.35);
+    }
+
+    /* ── Floating buttons ── */
+    .fab {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .fab:hover { transform: scale(1.1); }
+    .fab-wa  { background: linear-gradient(135deg, #25D366, #128C7E); color: #fff; }
+    .fab-ig  { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: #fff; }
+
+    /* ── Benefit icons ── */
+    .benefit-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 1px solid rgba(168,168,168,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(168,168,168,0.07);
+      font-size: 1.4rem;
+      color: #A8A8A8;
+      margin: 0 auto 1.2rem;
+      transition: background 0.3s;
+    }
+    .benefit-card:hover .benefit-icon {
+      background: rgba(168,168,168,0.15);
+    }
+
+    /* ── Category badge ── */
+    .badge {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 2px 10px;
+      border: 1px solid;
+      display: inline-block;
+      background: rgba(0,0,0,0.5);
+    }
+    .badge-hombre  { border-color: #7AABDE; color: #7AABDE; }
+    .badge-mujer   { border-color: #D9A0C8; color: #D9A0C8; }
+    .badge-unisex  { border-color: #A8A8A8; color: #A8A8A8; }
+
+    /* ── Footer ── */
+    footer {
+      background: #000000;
+      color: rgba(232,232,232,0.5);
+    }
+    footer a { transition: color 0.2s; }
+    footer a:hover { color: #D8D8D8; }
+
+    /* ══════════════════════════════════════════════════════
+       CLASES DE COLOR EXPLÍCITAS
+       (garantizan que funcionen sin importar Tailwind CDN)
+    ══════════════════════════════════════════════════════ */
+    .bg-cream   { background-color: #0D0D0D !important; }
+    .bg-ivory   { background-color: #141414 !important; }
+
+    .text-charcoal { color: #E8E8E8 !important; }
+    .text-muted    { color: #888888 !important; }
+    .text-gold     { color: #A8A8A8 !important; }
+
+    .border-gold   { border-color: #A8A8A8 !important; }
+
+    /* Opacidades de oro usadas en la página */
+    .border-gold\/10  { border-color: rgba(168,168,168,0.10) !important; }
+    .border-gold\/40  { border-color: rgba(168,168,168,0.40) !important; }
+    .border-gold\/50  { border-color: rgba(168,168,168,0.50) !important; }
+    .bg-gold          { background-color: #A8A8A8 !important; }
+    .bg-gold\/60      { background-color: rgba(168,168,168,0.60) !important; }
+    .text-gold\/60    { color: rgba(168,168,168,0.60) !important; }
+
+    /* hover: aplicados con atributo style cuando sea necesario */
+    .hover\:text-cream:hover  { color: #0D0D0D !important; }
+    .hover\:text-charcoal:hover { color: #E8E8E8 !important; }
+    .hover\:text-gold:hover   { color: #A8A8A8 !important; }
+    .hover\:bg-gold:hover     { background-color: #A8A8A8 !important; }
+    .hover\:border-gold:hover { border-color: #A8A8A8 !important; }
+
+    /* group-hover para overlay de cards */
+    .group:hover .group-hover\:opacity-100 { opacity: 1 !important; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0D0D0D; }
+    ::-webkit-scrollbar-thumb { background: #A8A8A8; border-radius: 3px; }
+    /* ── Image placeholder (sin URL de imagen) ── */
+    .img-placeholder {
+      width: 100%;
+      height: 260px;
+      background: #222;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Loader ── */
+    #catalog-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 64px 0;
+      grid-column: 1 / -1;
+      color: #888888;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .loader-ring {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(168,168,168,0.2);
+      border-top-color: #A8A8A8;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error / empty state ── */
+    #catalog-error {
+      display: none;
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 64px 0;
+      color: #888888;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+    }
+    /* ══════════════════════════════
+       LIQUID GLASS MODAL
+    ══════════════════════════════ */
+
+    /* Backdrop */
+    #modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(18px) saturate(160%);
+      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #modal-backdrop.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* Glass panel */
+    #modal-panel {
+      position: relative;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 24px;
+      background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.09) 0%,
+        rgba(255,255,255,0.04) 50%,
+        rgba(200,200,200,0.06) 100%
+      );
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(255,255,255,0.12),
+        inset 0 -1px 0 rgba(255,255,255,0.04);
+      transform: translateY(32px) scale(0.97);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), opacity 0.35s ease;
+      opacity: 0;
+    }
+    #modal-backdrop.open #modal-panel {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    /* Scrollbar inside modal */
+    #modal-panel::-webkit-scrollbar { width: 4px; }
+    #modal-panel::-webkit-scrollbar-track { background: transparent; }
+    #modal-panel::-webkit-scrollbar-thumb { background: rgba(168,168,168,0.3); border-radius: 2px; }
+
+    /* Close button */
+    #modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(232,232,232,0.7);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      z-index: 2;
+    }
+    #modal-close:hover {
+      background: rgba(255,255,255,0.16);
+      color: #fff;
+    }
+
+    /* Modal image */
+    #modal-img-wrap {
+      width: 100%;
+      height: 260px;
+      border-radius: 20px 20px 0 0;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+    }
+    #modal-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #modal-img-wrap .img-placeholder {
+      height: 100%;
+      border-radius: 20px 20px 0 0;
+    }
+    /* Gradient over image */
+    #modal-img-wrap::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 50%;
+      background: linear-gradient(to top, rgba(10,10,10,0.7), transparent);
+      pointer-events: none;
+    }
+
+    /* Modal body */
+    .modal-body {
+      padding: 28px 32px 32px;
+    }
+    @media (max-width: 480px) {
+      .modal-body { padding: 20px 20px 28px; }
+    }
+
+    /* Pyramid section */
+    .pyramid-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .pyramid-row:last-child { border-bottom: none; }
+
+    .pyramid-icon-wrap {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.9rem;
+    }
+    .pyramid-salida  { background: rgba(255,220,100,0.12); color: #F5D06E; border: 1px solid rgba(245,208,110,0.25); }
+    .pyramid-corazon { background: rgba(220,120,160,0.12); color: #E899C0; border: 1px solid rgba(232,153,192,0.25); }
+    .pyramid-base    { background: rgba(130,100,70,0.18);  color: #C8A87A; border: 1px solid rgba(200,168,122,0.25); }
+
+    .pyramid-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(200,200,200,0.5);
+      margin-bottom: 4px;
+    }
+    .pyramid-notes {
+      font-size: 0.88rem;
+      color: rgba(232,232,232,0.85);
+      font-weight: 300;
+      line-height: 1.5;
+    }
+
+    /* Modal WA button */
+    .modal-wa-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px;
+      margin-top: 24px;
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #fff;
+      font-family: 'Jost', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 12px;
+      transition: opacity 0.2s, box-shadow 0.2s;
+    }
+    .modal-wa-btn:hover {
+      opacity: 0.88;
+      box-shadow: 0 6px 24px rgba(37,211,102,0.35);
+    }
+    .modal-wa-btn i { font-size: 1.1rem; }
+
+    /* Shimmer highlight on glass panel */
+    #modal-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.22) 50%, transparent 100%);
+      border-radius: 24px 24px 0 0;
+      pointer-events: none;
+    }
+
+    /* Card cursor */
+    .perfume-card { cursor: pointer; }
+  </style>
+</head>
+
+<body class="font-body bg-cream text-charcoal">
+
+  <!-- ══════════════════════════════════
+       NAVBAR
+  ══════════════════════════════════ -->
+  <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 px-6 lg:px-16 py-4 flex items-center justify-between transition-all duration-300">
+
+    <!-- Logo -->
+    <a href="#inicio" class="flex items-center gap-3 group">
+      <div class="w-8 h-8 border border-gold flex items-center justify-center">
+        <span class="font-display text-gold text-lg leading-none">E</span>
+      </div>
+      <span class="font-display text-2xl tracking-[0.2em] text-charcoal group-hover:text-gold transition-colors duration-300">ESSENCE</span>
+    </a>
+
+    <!-- Desktop nav -->
+    <ul class="hidden md:flex items-center gap-10">
+      <li><a href="#inicio"    class="text-xs tracking-widest uppercase text-muted hover:text-gold transition-colors">Inicio</a></li>
+      <li><a href="#catalogo"  class="text-xs tracking-widest uppercase text-muted hover:text-gold transition-colors">Catálogo</a></li>
+      <li><a href="#como-comprar" class="text-xs tracking-widest uppercase text-muted hover:text-gold transition-colors">Cómo Comprar</a></li>
+      <li><a href="#contacto"  class="text-xs tracking-widest uppercase text-muted hover:text-gold transition-colors">Contacto</a></li>
+    </ul>
+
+    <!-- Mobile hamburger -->
+    <button id="menu-toggle" class="md:hidden text-charcoal hover:text-gold transition-colors" aria-label="Abrir menú">
+      <i class="fa-solid fa-bars text-lg"></i>
+    </button>
+  </nav>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="fixed top-[64px] left-0 right-0 z-40 bg-cream/98 backdrop-blur-md border-b border-gold/10" style="background:rgba(13,13,13,0.98);">
+    <ul class="flex flex-col py-4">
+      <li><a href="#inicio"       class="block px-8 py-3 text-xs tracking-widest uppercase text-muted hover:text-gold transition-colors" onclick="closeMobileMenu()">Inicio</a></li>
+      <li><a href="#catalogo"     class="block px-8 py-3 text-xs tracking-widest uppercase text-muted hover:text-gold transition-colors" onclick="closeMobileMenu()">Catálogo</a></li>
+      <li><a href="#como-comprar" class="block px-8 py-3 text-xs tracking-widest uppercase text-muted hover:text-gold transition-colors" onclick="closeMobileMenu()">Cómo Comprar</a></li>
+      <li><a href="#contacto"     class="block px-8 py-3 text-xs tracking-widest uppercase text-muted hover:text-gold transition-colors" onclick="closeMobileMenu()">Contacto</a></li>
+    </ul>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       HERO
+  ══════════════════════════════════ -->
+  <section id="inicio" class="hero-bg min-h-screen flex items-center justify-center relative overflow-hidden">
+
+    <!-- Decorative circles -->
+    <div class="hero-circle" style="width:500px;height:500px;top:50%;left:60%;transform:translate(-50%,-50%);"></div>
+    <div class="hero-circle" style="width:700px;height:700px;top:50%;left:60%;transform:translate(-50%,-50%);animation-delay:2s;"></div>
+    <div class="hero-circle" style="width:300px;height:300px;top:50%;left:60%;transform:translate(-50%,-50%);animation-delay:4s;"></div>
+
+    <!-- Content -->
+    <div class="relative z-10 text-center px-6 max-w-4xl mx-auto">
+
+      <p class="text-xs tracking-[0.4em] uppercase text-gold mb-8 reveal" style="animation-delay:0.1s">
+        Perfumes Árabes &amp; de Diseñador · Córdoba, Argentina
+      </p>
+
+      <h1 class="font-display text-5xl sm:text-6xl md:text-8xl text-white/90 leading-none mb-6 reveal" style="animation-delay:0.25s">
+        El aroma que<br/>
+        <em class="gold-text not-italic">te define.</em>
+      </h1>
+
+      <div class="gold-rule w-24 mx-auto my-8 reveal" style="animation-delay:0.4s"></div>
+
+      <p class="text-sm md:text-base text-white/60 font-light tracking-wide leading-relaxed max-w-xl mx-auto mb-12 reveal" style="animation-delay:0.55s">
+        Perfumes árabes y de diseñador, <strong class="text-white/90">100% originales</strong>, seleccionados con criterio y pasión.<br/>
+        Ubicados en Córdoba · Enviamos a todo el país — atención personalizada, directo a tu puerta.
+      </p>
+
+      <a href="#catalogo" class="inline-block border border-gold text-gold hover:bg-gold hover:text-cream px-10 py-3 text-xs tracking-[0.2em] uppercase transition-all duration-300 reveal" style="animation-delay:0.7s">
+        Ver Catálogo
+      </a>
+    </div>
+
+    <!-- Scroll hint -->
+    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-40">
+      <span class="text-white/90 text-xs tracking-widest uppercase">Scroll</span>
+      <div class="w-px h-10 bg-gold/60 animate-pulse"></div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════
+       CATÁLOGO
+  ══════════════════════════════════ -->
+  <section id="catalogo" class="py-24 px-6 lg:px-16 bg-cream">
+
+    <!-- Header -->
+    <div class="text-center mb-16 reveal">
+      <p class="text-xs tracking-[0.35em] uppercase text-gold mb-3">Colección 2025</p>
+      <h2 class="font-display text-4xl md:text-5xl text-charcoal mb-4">Nuestros Perfumes</h2>
+      <div class="gold-rule w-20 mx-auto mb-5"></div>
+      <p class="text-sm text-muted font-light tracking-wide max-w-md mx-auto">
+        Cada fragancia es una historia. Encontrá la tuya.
+      </p>
+    </div>
+
+    <!-- Search bar -->
+    <div class="flex justify-center mb-6 reveal">
+      <div class="relative w-full max-w-md">
+        <span class="absolute inset-y-0 left-4 flex items-center pointer-events-none" style="color:#A8A8A8;">
+          <i class="fa-solid fa-magnifying-glass text-sm"></i>
+        </span>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Buscar perfume…"
+          autocomplete="off"
+          class="w-full pl-11 pr-4 py-3 text-sm tracking-wide outline-none transition-all duration-300"
+          style="
+            background: rgba(255,255,255,0.04);
+            border: 1px solid #A8A8A8;
+            color: #E8E8E8;
+            letter-spacing: 0.05em;
+            font-family: 'Jost', sans-serif;
+          "
+        />
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex flex-wrap justify-center gap-3 mb-14 reveal">
+      <button class="filter-btn active" data-filter="todos">Todos</button>
+      <button class="filter-btn" data-filter="hombre">Hombre</button>
+      <button class="filter-btn" data-filter="mujer">Mujer</button>
+      <button class="filter-btn" data-filter="unisex">Unisex</button>
+    </div>
+
+    <!-- Cards Grid — llenado dinámicamente desde Google Sheets -->
+    <div id="perfume-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
+
+      <!-- Loader -->
+      <div id="catalog-loader">
+        <div class="loader-ring"></div>
+        <span>Cargando catálogo…</span>
+      </div>
+
+      <!-- Error / vacío -->
+      <div id="catalog-error">
+        <i class="fa-regular fa-face-frown text-2xl mb-3 block"></i>
+        No se pudieron cargar los productos. Verificá la URL del CSV.
+      </div>
+
+      <!-- Empty state — Sin resultados de búsqueda -->
+      <div id="empty-state" style="
+        display: none;
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 72px 24px;
+      ">
+        <!-- Ícono -->
+        <div style="
+          width: 72px; height: 72px; border-radius: 50%;
+          border: 1px solid rgba(168,168,168,0.25);
+          background: rgba(168,168,168,0.06);
+          display: flex; align-items: center; justify-content: center;
+          margin: 0 auto 24px;
+          font-size: 1.6rem; color: #A8A8A8;
+        ">
+          <i class="fa-solid fa-magnifying-glass-minus"></i>
+        </div>
+
+        <!-- Título -->
+        <h3 style="
+          font-family: 'Cormorant Garamond', serif;
+          font-size: 1.75rem;
+          color: #E8E8E8;
+          margin-bottom: 12px;
+          font-weight: 400;
+        ">¿No encontraste tu fragancia ideal?</h3>
+
+        <!-- Línea decorativa -->
+        <div style="
+          height: 1px;
+          background: linear-gradient(90deg, transparent, #A8A8A8, transparent);
+          width: 80px; margin: 0 auto 16px;
+        "></div>
+
+        <!-- Texto -->
+        <p style="
+          font-size: 0.82rem;
+          color: #888888;
+          font-weight: 300;
+          line-height: 1.7;
+          max-width: 380px;
+          margin: 0 auto 28px;
+          letter-spacing: 0.02em;
+        ">
+          Si no encontrás el perfume que buscás, contactanos.<br/>
+          Trabajamos a pedido y podemos encargarlo especialmente para vos.
+        </p>
+
+        <!-- Botón WhatsApp -->
+        <a
+          id="empty-state-wa"
+          href="#"
+          target="_blank"
+          style="
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 13px 32px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            color: #ffffff;
+            font-family: 'Jost', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: opacity 0.2s;
+          "
+          onmouseover="this.style.opacity='0.85'"
+          onmouseout="this.style.opacity='1'"
+        >
+          <i class="fab fa-whatsapp" style="font-size:1.1rem;"></i>
+          Encargar por WhatsApp
+        </a>
+      </div>
+
+    </div><!-- /grid -->
+  </section>
+
+
+  <!-- ══════════════════════════════════
+       CÓMO COMPRAR
+  ══════════════════════════════════ -->
+  <section id="como-comprar" class="py-24 px-6 lg:px-16" style="background:#080808;">
+
+    <div class="max-w-5xl mx-auto">
+
+      <!-- Header -->
+      <div class="text-center mb-20 reveal">
+        <p class="text-xs tracking-[0.35em] uppercase text-gold mb-3">Simple y seguro</p>
+        <h2 class="font-display text-4xl md:text-5xl text-white/90 mb-4">Cómo Comprar</h2>
+        <div class="gold-rule w-20 mx-auto mb-5"></div>
+        <p class="text-sm text-white/50 font-light tracking-wide max-w-lg mx-auto">
+          Somos una tienda <strong class="text-gold font-normal">100% online</strong> ubicada en Córdoba, Argentina, especializada en perfumes árabes y de diseñador <strong class="text-gold font-normal">100% originales</strong>.
+          Hacemos envíos a <strong class="text-gold font-normal">todo el país</strong> — tu fragancia llega a vos de manera personalizada, simple y directa.
+        </p>
+      </div>
+
+      <!-- Steps -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+
+        <div class="text-center reveal group" style="transition-delay:0.1s">
+          <div class="w-14 h-14 border border-gold/40 group-hover:border-gold transition-colors duration-300 flex items-center justify-center mx-auto mb-6">
+            <span class="font-display text-2xl gold-text">01</span>
+          </div>
+          <div class="flex justify-center text-gold mb-4 text-2xl"><i class="fa-regular fa-bookmark"></i></div>
+          <h3 class="font-display text-xl text-white/90 mb-3">Elegí tu Fragancia</h3>
+          <p class="text-sm text-white/50 font-light leading-relaxed">
+            Navegá nuestro catálogo, filtrá por género y encontrá las notas que más se adapten a tu personalidad.
+          </p>
+        </div>
+
+        <div class="text-center reveal group" style="transition-delay:0.25s">
+          <div class="w-14 h-14 border border-gold/40 group-hover:border-gold transition-colors duration-300 flex items-center justify-center mx-auto mb-6">
+            <span class="font-display text-2xl gold-text">02</span>
+          </div>
+          <div class="flex justify-center text-gold mb-4 text-2xl"><i class="fab fa-whatsapp"></i></div>
+          <h3 class="font-display text-xl text-white/90 mb-3">Contactanos</h3>
+          <p class="text-sm text-white/50 font-light leading-relaxed">
+            Hacé clic en "Consultar por WhatsApp" o escribinos directamente. Te asesoramos, confirmamos disponibilidad y acordamos el pago.
+          </p>
+        </div>
+
+        <div class="text-center reveal group" style="transition-delay:0.4s">
+          <div class="w-14 h-14 border border-gold/40 group-hover:border-gold transition-colors duration-300 flex items-center justify-center mx-auto mb-6">
+            <span class="font-display text-2xl gold-text">03</span>
+          </div>
+          <div class="flex justify-center text-gold mb-4 text-2xl"><i class="fa-solid fa-box-open"></i></div>
+          <h3 class="font-display text-xl text-white/90 mb-3">Recibilo en Casa</h3>
+          <p class="text-sm text-white/50 font-light leading-relaxed">
+            Coordinamos el envío a tu domicilio de la forma más conveniente para vos. ¡Tu fragancia llega segura y perfectamente embalada!
+          </p>
+        </div>
+
+      </div>
+
+      <!-- CTA -->
+      <div class="flex justify-center mt-16 reveal">
+        <a href="https://wa.me/5491100000000?text=Hola!%20Quiero%20hacer%20una%20consulta" target="_blank"
+           class="inline-flex items-center gap-3 border border-gold/50 hover:border-gold text-gold hover:bg-gold hover:text-charcoal px-10 py-3.5 text-xs tracking-[0.2em] uppercase transition-all duration-300">
+          <i class="fab fa-whatsapp text-lg"></i> Comenzar Ahora
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════
+       BENEFICIOS / CONFIANZA
+  ══════════════════════════════════ -->
+  <section class="py-24 px-6 lg:px-16" style="background:#141414;">
+
+    <div class="text-center mb-16 reveal">
+      <p class="text-xs tracking-[0.35em] uppercase text-gold mb-3">Por qué elegirnos</p>
+      <h2 class="font-display text-4xl md:text-5xl" style="color:#E8E8E8;">Nuestra Promesa</h2>
+      <div class="gold-rule w-20 mx-auto mt-4"></div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 max-w-5xl mx-auto">
+
+      <div class="benefit-card text-center reveal" style="transition-delay:0.1s">
+        <div class="benefit-icon"><i class="fa-solid fa-heart"></i></div>
+        <h3 class="font-display text-xl mb-3">Atención Personalizada</h3>
+        <p class="text-sm text-muted font-light leading-relaxed">
+          Cada cliente es único. Te asesoramos en la elección de tu fragancia ideal según tu estilo y preferencias, de forma directa y cálida.
+        </p>
+      </div>
+
+      <div class="benefit-card text-center reveal" style="transition-delay:0.25s">
+        <div class="benefit-icon"><i class="fa-solid fa-truck-fast"></i></div>
+        <h3 class="font-display text-xl mb-3">Envíos a Todo el País</h3>
+        <p class="text-sm text-muted font-light leading-relaxed">
+          Despachamos a cualquier punto de Argentina. Trabajamos con los mejores servicios de logística para que tu pedido llegue seguro y en tiempo.
+        </p>
+      </div>
+
+      <div class="benefit-card text-center reveal" style="transition-delay:0.4s">
+        <div class="benefit-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <h3 class="font-display text-xl mb-3">Calidad Garantizada</h3>
+        <p class="text-sm text-muted font-light leading-relaxed">
+          Todos nuestros perfumes son <strong class="font-medium text-charcoal">100% originales</strong>. Trabajamos únicamente con proveedores certificados de perfumes árabes y de diseñador. Tu satisfacción es nuestra prioridad absoluta.
+        </p>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════
+       CONTACTO / CTA FINAL
+  ══════════════════════════════════ -->
+  <section id="contacto" class="py-24 px-6 lg:px-16 bg-cream">
+
+    <div class="max-w-2xl mx-auto text-center reveal">
+      <p class="text-xs tracking-[0.35em] uppercase text-gold mb-3">Estamos para vos</p>
+      <h2 class="font-display text-4xl md:text-5xl text-charcoal mb-4">Hablemos</h2>
+      <div class="gold-rule w-20 mx-auto mb-6"></div>
+      <p class="text-sm text-muted font-light leading-relaxed mb-10">
+        ¿Tenés dudas sobre alguna fragancia o querés recomendaciones personalizadas?<br/>
+        Escribinos por WhatsApp o Instagram y te respondemos a la brevedad.
+      </p>
+
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <a href="https://wa.me/5491100000000?text=Hola!%20Quiero%20hacer%20una%20consulta" target="_blank"
+           class="inline-flex items-center justify-center gap-3 px-8 py-3.5 text-xs tracking-[0.15em] uppercase font-medium text-white transition-all duration-200 hover:opacity-80"
+           style="background:linear-gradient(135deg,#25D366,#128C7E);">
+          <i class="fab fa-whatsapp text-lg"></i> WhatsApp
+        </a>
+        <a href="https://instagram.com/essence.perfumeria" target="_blank"
+           class="inline-flex items-center justify-center gap-3 border border-gold hover:bg-gold hover:text-cream text-gold px-8 py-3.5 text-xs tracking-[0.15em] uppercase transition-all duration-300">
+          <i class="fab fa-instagram text-lg"></i> Instagram
+        </a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════
+       FOOTER
+  ══════════════════════════════════ -->
+  <footer class="py-12 px-6 lg:px-16">
+
+    <div class="max-w-5xl mx-auto">
+
+      <!-- Top row -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 border border-gold/40 flex items-center justify-center">
+            <span class="font-display text-gold text-base leading-none">E</span>
+          </div>
+          <span class="font-display text-xl tracking-[0.2em] text-white/80">ESSENCE</span>
+        </div>
+
+        <!-- Nav links -->
+        <ul class="flex flex-wrap justify-center gap-8 text-xs tracking-widest uppercase">
+          <li><a href="#inicio" class="text-white/40 hover:text-gold">Inicio</a></li>
+          <li><a href="#catalogo" class="text-white/40 hover:text-gold">Catálogo</a></li>
+          <li><a href="#como-comprar" class="text-white/40 hover:text-gold">Cómo Comprar</a></li>
+          <li><a href="#contacto" class="text-white/40 hover:text-gold">Contacto</a></li>
+        </ul>
+
+        <!-- Social icons -->
+        <div class="flex items-center gap-5">
+          <a href="https://wa.me/5491100000000" target="_blank" class="text-white/40 hover:text-gold text-lg">
+            <i class="fab fa-whatsapp"></i>
+          </a>
+          <a href="https://instagram.com/essence.perfumeria" target="_blank" class="text-white/40 hover:text-gold text-lg">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="https://tiktok.com/@essence.perfumeria" target="_blank" class="text-white/40 hover:text-gold text-lg">
+            <i class="fab fa-tiktok"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="gold-rule opacity-20 mb-8"></div>
+
+      <!-- Bottom row -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-white/25 tracking-wide">
+        <p>Gracias por confiar en <span class="text-gold/60">ESSENCE Perfumería</span>. Desde Córdoba al resto del país, tu aroma es nuestra pasión.</p>
+        <p>© 2025 ESSENCE — Todos los derechos reservados.</p>
+      </div>
+
+    </div>
+  </footer>
+
+
+  <!-- ══════════════════════════════════
+       FLOATING BUTTONS
+  ══════════════════════════════════ -->
+  <div class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 items-end">
+    <a href="https://instagram.com/essence.perfumeria" target="_blank" class="fab fab-ig" title="Instagram">
+      <i class="fab fa-instagram"></i>
+    </a>
+    <a href="https://wa.me/5491100000000?text=Hola!%20Quiero%20hacer%20una%20consulta" target="_blank" class="fab fab-wa" title="WhatsApp">
+      <i class="fab fa-whatsapp"></i>
+    </a>
+  </div>
+
+
+  <!-- ══════════════════════════════════
+       JAVASCRIPT
+  ══════════════════════════════════ -->
+  <script>
+    // ═══════════════════════════════════════════════
+    // CONFIGURACIÓN
+    // ═══════════════════════════════════════════════
+    const CSV_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR5F7MKSm6ESED5yk8DEcaogKK851wZjp5Kb9ngdKQmI34qvqWQ0bJsfXpoH70WBsECpf1iM5Gd5y_N/pub?output=csv';
+    const WA_NUMBER = '5491100000000';
+
+    // ── Navbar ────────────────────────────────────────────────────
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // ── Mobile menu ───────────────────────────────────────────────
+    const menuToggle = document.getElementById('menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    let menuOpen = false;
+    menuToggle.addEventListener('click', () => {
+      menuOpen = !menuOpen;
+      mobileMenu.classList.toggle('open', menuOpen);
+      menuToggle.innerHTML = menuOpen
+        ? '<i class="fa-solid fa-xmark text-lg"></i>'
+        : '<i class="fa-solid fa-bars text-lg"></i>';
+    });
+    function closeMobileMenu() {
+      menuOpen = false;
+      mobileMenu.classList.remove('open');
+      menuToggle.innerHTML = '<i class="fa-solid fa-bars text-lg"></i>';
+    }
+
+    // ── Scroll reveal ─────────────────────────────────────────────
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.classList.add('visible'); revealObserver.unobserve(e.target); }
+      });
+    }, { threshold: 0.12 });
+    function observeRevealEls() {
+      document.querySelectorAll('.reveal:not(.visible)').forEach(el => revealObserver.observe(el));
+    }
+    observeRevealEls();
+    document.querySelectorAll('.hero-bg .reveal').forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), 200 + i * 160);
+    });
+
+    // ── Búsqueda + filtro ─────────────────────────────────────────
+    let activeFilter = 'todos';
+    let searchQuery  = '';
+
+    function normalizeText(str) {
+      return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    }
+
+    // Filtros de categoría
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.filter;
+        applyFilter();
+      });
+    });
+
+    // Buscador en tiempo real (con escudo protector)
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value.trim();
+        applyFilter();
+      });
+      searchInput.addEventListener('focus', () => {
+        searchInput.style.borderColor = '#D8D8D8';
+        searchInput.style.background  = 'rgba(255,255,255,0.07)';
+      });
+      searchInput.addEventListener('blur', () => {
+        searchInput.style.borderColor = '#A8A8A8';
+        searchInput.style.background  = 'rgba(255,255,255,0.04)';
+      });
+    }
+
+    function applyFilter() {
+      const query  = normalizeText(searchQuery);
+      let visible  = 0;
+      document.querySelectorAll('#perfume-grid .perfume-card').forEach(card => {
+        const cat         = card.dataset.category;
+        const nombre      = normalizeText(card.querySelector('h3')?.textContent || '');
+        const matchCat    = activeFilter === 'todos' || cat === activeFilter;
+        const matchSearch = query === '' || nombre.includes(query);
+        const show        = matchCat && matchSearch;
+        card.style.display = show ? '' : 'none';
+        if (show) { card.classList.remove('visible'); setTimeout(() => card.classList.add('visible'), 60); visible++; }
+      });
+      // Empty state
+      const emptyState = document.getElementById('empty-state');
+      if (!emptyState) return;
+      const totalCards = document.querySelectorAll('#perfume-grid .perfume-card').length;
+      if (visible === 0 && totalCards > 0) {
+        const termino   = searchQuery.trim();
+        const categoria = activeFilter !== 'todos' ? ` (${activeFilter})` : '';
+        const waMsg     = termino
+          ? `Hola! Busco el perfume "${termino}"${categoria} y no lo encontré. ¿Pueden encargarlo?`
+          : `Hola! Busco un perfume${categoria} que no encuentro en el catálogo. ¿Pueden ayudarme?`;
+        const waLink = document.getElementById('empty-state-wa');
+        if (waLink) waLink.href = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(waMsg);
+        emptyState.style.display = 'block';
+      } else {
+        emptyState.style.display = 'none';
+      }
+    }
+
+    // ── Modal Liquid Glass ────────────────────────────────────────
+    const backdrop = document.getElementById('modal-backdrop');
+    const mClose   = document.getElementById('modal-close');
+
+    // ── REGLA 2: openModal fail-safe — verifica cada elemento antes de usarlo ──
+    function openModal(nombre, imgUrl, cat, mensajeWa, nSalida, nCorazon, nBase) {
+      // Imagen
+      const imgWrap = document.getElementById('modal-img-wrap');
+      if (imgWrap) {
+        imgWrap.innerHTML = imgUrl
+          ? '<img src="' + imgUrl + '" alt="' + nombre + '" onerror="this.style.display=\'none\'">'
+          : '<div class="img-placeholder" style="height:100%;border-radius:20px 20px 0 0;"><i class="fa-solid fa-spray-can-sparkles" style="font-size:2.5rem;color:#555;"></i></div>';
+      }
+
+      // Badge
+      const badgeMap = { hombre: 'badge-hombre', mujer: 'badge-mujer', unisex: 'badge-unisex' };
+      const elBadge  = document.getElementById('modal-badge');
+      if (elBadge) {
+        elBadge.className   = 'badge ' + (badgeMap[cat] || 'badge-unisex');
+        elBadge.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+      }
+
+      // Textos — cada uno protegido con if
+      const elNombre = document.getElementById('modal-nombre');
+      if (elNombre) elNombre.textContent = nombre;
+
+      const elNotas = document.getElementById('modal-notas-general');
+      if (elNotas) elNotas.textContent = nCorazon || '';
+
+      const elSalida = document.getElementById('modal-salida');
+      if (elSalida) elSalida.textContent = nSalida || '—';
+
+      const elCorazon = document.getElementById('modal-corazon');
+      if (elCorazon) elCorazon.textContent = nCorazon || '—';
+
+      const elBase = document.getElementById('modal-base');
+      if (elBase) elBase.textContent = nBase || '—';
+
+      const elWa = document.getElementById('modal-wa');
+      if (elWa) elWa.href = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(mensajeWa);
+
+      // REGLA 3: Apertura segura
+      const modalBackdrop = document.getElementById('modal-backdrop');
+      if (modalBackdrop) modalBackdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // REGLA 3: Cierre seguro
+    function closeModal() {
+      const modalBackdrop = document.getElementById('modal-backdrop');
+      if (modalBackdrop) modalBackdrop.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    const mCloseBtn = document.getElementById('modal-close');
+    if (mCloseBtn) mCloseBtn.addEventListener('click', closeModal);
+
+    const modalBg = document.getElementById('modal-backdrop');
+    if (modalBg) modalBg.addEventListener('click', function(e) {
+      if (e.target === modalBg) closeModal();
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ── Carga del catálogo desde Google Sheets ────────────────────
+    function loadCatalog() {
+      const grid = document.getElementById('perfume-grid');
+      if (!grid) return;
+
+      Papa.parse(CSV_URL + '&t=' + Date.now(), {
+        download:       true,
+        header:         true,
+        skipEmptyLines: true,
+        complete: function(results) {
+
+          // Normalizar TODAS las claves: sin tildes, sin espacios extra, en minúsculas
+          // Esto resuelve "Categoría"→"categoria", "Notas de Corazón"→"notas de corazon", etc.
+          const data = results.data.map(function(row) {
+            var newRow = {};
+            Object.keys(row).forEach(function(key) {
+              var k = key.trim()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase();
+              newRow[k] = row[key];
+            });
+            return newRow;
+          });
+
+          if (!data || data.length === 0) {
+            grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888888;padding:60px 0;font-family:Jost,sans-serif;">El catálogo está vacío. Verificá que el Google Sheet esté publicado.</p>';
+            return;
+          }
+
+          grid.innerHTML = ''; // Limpia el loader
+
+          data.forEach(function(p) {
+            var nombre = (p['nombre'] || '').trim();
+            if (!nombre) return;
+
+            // Categoría
+            var cat = (p['categoria'] || '').toLowerCase();
+            if      (cat.includes('hom')) cat = 'hombre';
+            else if (cat.includes('muj')) cat = 'mujer';
+            else                          cat = 'unisex';
+
+            // Pirámide olfativa
+            var nSalida  = p['notas de salida']  || '—';
+            var nCorazon = p['notas de corazon'] || '—';
+            var nBase    = p['notas de base']    || '—';
+
+            // Imagen (ignora placeholders)
+            var imgUrl = (p['imagen'] || '').trim();
+            if (!imgUrl || imgUrl.toLowerCase() === '[url]' || imgUrl.toLowerCase() === 'buscar_foto') imgUrl = '';
+
+            var mensajeWa = p['mensaje'] || ('Hola! Me interesa el perfume ' + nombre + '. ¿Tienen stock disponible?');
+            var badgeMap  = { hombre: 'badge-hombre', mujer: 'badge-mujer', unisex: 'badge-unisex' };
+            var badgeCls  = badgeMap[cat] || 'badge-unisex';
+            var labelCap  = cat.charAt(0).toUpperCase() + cat.slice(1);
+
+            var imgHTML = imgUrl
+              ? '<img src="' + imgUrl + '" alt="' + nombre + '" style="width:100%;height:260px;object-fit:cover;" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+              : '';
+            var placeholderStyle = imgUrl ? 'display:none' : '';
+            var placeholderHTML = '<div class="img-placeholder" style="' + placeholderStyle + '"><i class="fa-solid fa-spray-can-sparkles" style="font-size:2rem;color:#555;"></i></div>';
+
+            var card = document.createElement('div');
+            card.className        = 'perfume-card reveal visible';
+            card.dataset.category = cat;
+
+            card.innerHTML =
+              '<div class="card-img-wrap group">' +
+                imgHTML +
+                placeholderHTML +
+                '<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300" style="background:rgba(0,0,0,0.35);backdrop-filter:blur(2px);">' +
+                  '<span style="font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:6px 16px;">Ver Detalles</span>' +
+                '</div>' +
+                '<div class="absolute top-3 left-3"><span class="badge ' + badgeCls + '">' + labelCap + '</span></div>' +
+              '</div>' +
+              '<div class="p-5">' +
+                '<h3 class="font-display text-xl mb-1" style="color:#E8E8E8;">' + nombre + '</h3>' +
+                '<p style="font-size:0.72rem;color:#888888;letter-spacing:0.06em;margin-bottom:12px;">' + (nCorazon !== '—' ? nCorazon : '') + '</p>' +
+                '<div class="gold-rule mb-4"></div>' +
+                '<button class="wa-btn" id="wa-' + Math.random().toString(36).slice(2) + '"><i class="fab fa-whatsapp"></i> Consultar</button>' +
+              '</div>';
+
+            // WA button
+            card.querySelector('.wa-btn').addEventListener('click', function(e) {
+              e.stopPropagation();
+              window.open('https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(mensajeWa), '_blank');
+            });
+
+            // Card click → modal
+            card.addEventListener('click', function() {
+              openModal(nombre, imgUrl, cat, mensajeWa, nSalida, nCorazon, nBase);
+            });
+
+            grid.appendChild(card);
+          });
+
+          applyFilter();
+          observeRevealEls();
+        },
+        error: function() {
+          grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888888;padding:60px 0;font-family:Jost,sans-serif;">Error al conectar. Verificá que el Google Sheet esté publicado como CSV.</p>';
+        }
+      });
+    }
+
+    loadCatalog();
+  </script>
+
+  <!-- ══════════════════════════════════
+       LIQUID GLASS MODAL
+  ══════════════════════════════════ -->
+  <div id="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-nombre">
+
+    <div id="modal-panel">
+
+      <!-- Botón cerrar -->
+      <button id="modal-close" aria-label="Cerrar">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- Imagen -->
+      <div id="modal-img-wrap"></div>
+
+      <!-- Cuerpo -->
+      <div class="modal-body">
+
+        <!-- Badge + nombre -->
+        <div class="flex items-center gap-3 mb-1">
+          <span id="modal-badge" class="badge"></span>
+        </div>
+        <h2 id="modal-nombre" class="font-display text-3xl md:text-4xl mb-1" style="color:#F0F0F0;"></h2>
+        <p id="modal-notas-general" class="text-xs text-muted tracking-wide mb-6"></p>
+
+        <div class="gold-rule mb-6"></div>
+
+        <!-- Pirámide olfativa -->
+        <p class="text-xs tracking-[0.25em] uppercase mb-4" style="color:rgba(168,168,168,0.6);">Pirámide Olfativa</p>
+
+        <div id="modal-pyramid">
+
+          <div class="pyramid-row">
+            <div class="pyramid-icon-wrap pyramid-salida">
+              <i class="fa-solid fa-wind"></i>
+            </div>
+            <div>
+              <p class="pyramid-label">Notas de Salida</p>
+              <p id="modal-salida" class="pyramid-notes">—</p>
+            </div>
+          </div>
+
+          <div class="pyramid-row">
+            <div class="pyramid-icon-wrap pyramid-corazon">
+              <i class="fa-solid fa-heart"></i>
+            </div>
+            <div>
+              <p class="pyramid-label">Notas de Corazón</p>
+              <p id="modal-corazon" class="pyramid-notes">—</p>
+            </div>
+          </div>
+
+          <div class="pyramid-row">
+            <div class="pyramid-icon-wrap pyramid-base">
+              <i class="fa-solid fa-mountain"></i>
+            </div>
+            <div>
+              <p class="pyramid-label">Notas de Base</p>
+              <p id="modal-base" class="pyramid-notes">—</p>
+            </div>
+          </div>
+
+        </div><!-- /pyramid -->
+
+        <!-- Botón WA -->
+        <a id="modal-wa" href="#" target="_blank" class="modal-wa-btn">
+          <i class="fab fa-whatsapp"></i> Consultar por WhatsApp
+        </a>
+
+      </div><!-- /modal-body -->
+    </div><!-- /modal-panel -->
+  </div><!-- /modal-backdrop -->
+
+</body>
+</html>
